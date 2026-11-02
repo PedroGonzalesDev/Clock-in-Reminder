@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer ring / precision bevel -->
+    <path
+        android:strokeColor="#187B77"
+        android:strokeWidth="3.5"
+        android:pathData="M 54,24 A 30,30 0 1 1 53.99,24" />
+    <!-- Inner dial tint -->
+    <path
+        android:fillColor="#1B3040"
+        android:pathData="M 54,26 A 28,28 0 1 1 53.99,26" />
+    <!-- Hour notches (12, 3, 6, 9) -->
+    <path
+        android:strokeColor="#F6F4EE"
+        android:strokeWidth="2.5"
+        android:pathData="M 54,27 L 54,32 M 81,54 L 76,54 M 54,81 L 54,76 M 27,54 L 32,54" />
+    <!-- Clock hour hand in warm copper -->
+    <path
+        android:strokeColor="#D58D63"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 54,54 L 54,38" />
+    <!-- Clock minute hand in bright off-white -->
+    <path
+        android:strokeColor="#F6F4EE"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 54,54 L 68,54" />
+    <!-- Center pivot point -->
+    <path
+        android:fillColor="#D58D63"
+        android:pathData="M 54,51 A 3,3 0 1 1 53.99,51" />
+    <!-- Small checkmark / stamp punch badge at bottom right -->
+    <path
+        android:fillColor="#187B77"
+        android:pathData="M 72,66 A 9,9 0 1 1 71.99,66" />
+    <path
+        android:strokeColor="#F6F4EE"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 68.5,72 L 71,74.5 L 75.5,69" />
+</vector>
