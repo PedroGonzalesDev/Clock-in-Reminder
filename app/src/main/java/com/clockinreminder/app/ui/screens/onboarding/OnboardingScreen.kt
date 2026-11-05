@@ -1,6 +1,7 @@
 package com.clockinreminder.app.ui.screens.onboarding
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,7 +48,7 @@ class OnboardingViewModel(
     var lunchStartText by mutableStateOf("12:00")
     var lunchEndText by mutableStateOf("13:00")
     var endTimeText by mutableStateOf("17:00")
-    var workSaturday by mutableStateOf(false)
+    var workWeekends by mutableStateOf(false)
     var toleranceMinutesText by mutableStateOf("10")
 
     // Step C
@@ -85,8 +86,7 @@ class OnboardingViewModel(
             val days = (1..7).map { dow ->
                 val isWork = when (dow) {
                     in 1..5 -> true // Seg..Sex
-                    6 -> workSaturday
-                    else -> false // Domingo folga
+                    else -> workWeekends // Sáb & Dom
                 }
                 ScheduleDayEntity(
                     scheduleId = 0,
@@ -364,16 +364,42 @@ private fun StepSchedule(vm: OnboardingViewModel) {
             )
         }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Checkbox(
-                checked = vm.workSaturday,
-                onCheckedChange = { vm.workSaturday = it }
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Sábado é dia normal de trabalho na escala", style = MaterialTheme.typography.bodyMedium)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Escala de Trabalho habitual:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { vm.workWeekends = false }
+            ) {
+                RadioButton(
+                    selected = !vm.workWeekends,
+                    onClick = { vm.workWeekends = false }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text("Não trabalho sábado e domingo", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Segunda a Sexta (5x2). Fins de semana são folgas contratuais.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { vm.workWeekends = true }
+            ) {
+                RadioButton(
+                    selected = vm.workWeekends,
+                    onClick = { vm.workWeekends = true }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text("Também trabalho sábado e domingo", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Escala 6x1, 6x2 ou flexível. Você registra folgas nos dias específicos.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
 
         OutlinedTextField(

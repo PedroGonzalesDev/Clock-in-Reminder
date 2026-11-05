@@ -60,43 +60,44 @@ object ExcelExporter {
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#DFDACF"/>
    </Borders>
   </Style>
-  <Style ss:ID="DataCellPositive">
+  <Style ss:ID="DataCellBold">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Font ss:FontName="Segoe UI" ss:Size="10" ss:Color="#2E7D32" ss:Bold="1"/>
+   <Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#142431"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#DFDACF"/>
    </Borders>
   </Style>
-  <Style ss:ID="DataCellNegative">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Font ss:FontName="Segoe UI" ss:Size="10" ss:Color="#C74B4B" ss:Bold="1"/>
+  <Style ss:ID="DataCellLeft">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#DFDACF"/>
    </Borders>
   </Style>
   <Style ss:ID="TotalHeader">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Font ss:FontName="Segoe UI" ss:Size="11" ss:Bold="1" ss:Color="#142431"/>
    <Interior ss:Color="#EFECE3" ss:Pattern="Solid"/>
   </Style>
  </Styles>
  <Worksheet ss:Name="Horas">
-  <Table ss:DefaultColumnWidth="85">
+  <Table ss:DefaultColumnWidth="75">
    <Column ss:Width="70"/>
+   <Column ss:Width="50"/>
    <Column ss:Width="75"/>
-   <Column ss:Width="75"/>
+   <Column ss:Width="55"/>
+   <Column ss:Width="55"/>
+   <Column ss:Width="55"/>
+   <Column ss:Width="55"/>
+   <Column ss:Width="55"/>
+   <Column ss:Width="55"/>
+   <Column ss:Width="55"/>
+   <Column ss:Width="55"/>
    <Column ss:Width="65"/>
    <Column ss:Width="65"/>
    <Column ss:Width="65"/>
    <Column ss:Width="65"/>
    <Column ss:Width="65"/>
-   <Column ss:Width="65"/>
-   <Column ss:Width="65"/>
-   <Column ss:Width="65"/>
-   <Column ss:Width="65"/>
-   <Column ss:Width="65"/>
-   <Column ss:Width="65"/>
-   <Column ss:Width="65"/>
-   <Column ss:Width="150"/>
+   <Column ss:Width="180"/>
    <Row ss:Height="24">
     <Cell ss:StyleID="HeaderTitle"><Data ss:Type="String">CLOCK IN REMINDER - ESPELHO DE PONTO</Data></Cell>
    </Row>
@@ -111,14 +112,15 @@ object ExcelExporter {
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Saída 1</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Entrada 2</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Saída 2</Data></Cell>
-    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Previstas</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Entrada 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Saída 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Entrada 4</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Saída 4</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Trabalhadas</Data></Cell>
-    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Normais</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Extra 50%</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Extra 60%</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Extra 100%</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Noturnas</Data></Cell>
-    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Saldo Dia</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Observações</Data></Cell>
    </Row>
 """)
@@ -139,14 +141,21 @@ object ExcelExporter {
                 val s1 = punches.getOrNull(1)?.time?.toString() ?: ""
                 val e2 = punches.getOrNull(2)?.time?.toString() ?: ""
                 val s2 = punches.getOrNull(3)?.time?.toString() ?: ""
+                val e3 = punches.getOrNull(4)?.time?.toString() ?: ""
+                val s3 = punches.getOrNull(5)?.time?.toString() ?: ""
+                val e4 = punches.getOrNull(6)?.time?.toString() ?: ""
+                val s4 = punches.getOrNull(7)?.time?.toString() ?: ""
 
-                val saldoStyle = when {
-                    day.dailyBalanceMinutes > 0 -> "DataCellPositive"
-                    day.dailyBalanceMinutes < 0 -> "DataCellNegative"
-                    else -> "DataCellCenter"
+                val punchNotes = day.punches.mapNotNull { it.note?.trim() }.filter { it.isNotEmpty() }
+                val allNotes = mutableListOf<String>()
+                if (day.holiday != null) allNotes.add(day.holiday.name)
+                if (day.occurrence != null && !day.occurrence.note.isNullOrBlank()) allNotes.add(day.occurrence.note)
+                allNotes.addAll(punchNotes)
+                if (day.punches.size > 8) {
+                    val extraPunches = day.punches.drop(8).joinToString(", ") { "${it.time}" }
+                    allNotes.add("Outras: $extraPunches")
                 }
-
-                val obs = (day.occurrence?.note ?: day.holiday?.name ?: "")
+                val obs = allNotes.joinToString(" / ")
                     .replace("&", "&amp;")
                     .replace("<", "&lt;")
                     .replace(">", "&gt;")
@@ -159,15 +168,16 @@ object ExcelExporter {
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$s1</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$e2</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$s2</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.expectedMinutes)}</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.workedMinutes)}</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.normalMinutes)}</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.overtime50Minutes)}</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.overtime60Minutes)}</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.overtime100Minutes)}</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.nightMinutesReduced)}</Data></Cell>
-    <Cell ss:StyleID="$saldoStyle"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.dailyBalanceMinutes, withSign = true)}</Data></Cell>
-    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$obs</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$e3</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$s3</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$e4</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">$s4</Data></Cell>
+    <Cell ss:StyleID="DataCellBold"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(day.workedMinutes)}</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${if (day.overtime50Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime50Minutes) else "—"}</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${if (day.overtime60Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime60Minutes) else "—"}</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${if (day.overtime100Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime100Minutes) else "—"}</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${if (day.nightMinutesReduced > 0) CalculationEngine.formatMinutesToHours(day.nightMinutesReduced) else "—"}</Data></Cell>
+    <Cell ss:StyleID="DataCellLeft"><Data ss:Type="String">$obs</Data></Cell>
    </Row>
 """)
             }
@@ -181,31 +191,36 @@ object ExcelExporter {
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalExpectedMinutes)}</Data></Cell>
+    <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalWorkedMinutes)}</Data></Cell>
-    <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalNormalMinutes)}</Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)}</Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalOt60Minutes)}</Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalOt100Minutes)}</Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalNightMinutesReduced)}</Data></Cell>
-    <Cell ss:StyleID="TotalHeader"><Data ss:Type="String">${CalculationEngine.formatMinutesToHours(summary.totalDailyBalanceMinutes, withSign = true)}</Data></Cell>
     <Cell ss:StyleID="TotalHeader"><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row ss:Height="18">
-    <Cell><Data ss:Type="String">Remuneração Normal:</Data></Cell>
+    <Cell><Data ss:Type="String">Remuneração Normal Estimada:</Data></Cell>
     <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalNormalPayCents)}</Data></Cell>
    </Row>
    <Row ss:Height="18">
-    <Cell><Data ss:Type="String">Adicional Noturno:</Data></Cell>
-    <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalNightBonusPayCents)}</Data></Cell>
+    <Cell><Data ss:Type="String">Extras 50%:</Data></Cell>
+    <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}</Data></Cell>
    </Row>
    <Row ss:Height="18">
     <Cell><Data ss:Type="String">Extras 60% (Sábado):</Data></Cell>
     <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalOt60PayCents)}</Data></Cell>
    </Row>
    <Row ss:Height="18">
-    <Cell><Data ss:Type="String">Extras 100% (Dom/Fer):</Data></Cell>
+    <Cell><Data ss:Type="String">Extras 100% (Dom/Fer/Folga):</Data></Cell>
     <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalOt100PayCents)}</Data></Cell>
+   </Row>
+   <Row ss:Height="18">
+    <Cell><Data ss:Type="String">Adicional Noturno:</Data></Cell>
+    <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalNightBonusPayCents)}</Data></Cell>
    </Row>
    <Row ss:Height="20">
     <Cell ss:StyleID="HeaderMeta"><Data ss:Type="String">TOTAL BRUTO ESTIMADO:</Data></Cell>

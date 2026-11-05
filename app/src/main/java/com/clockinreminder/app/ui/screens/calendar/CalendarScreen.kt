@@ -244,8 +244,21 @@ fun CalendarScreen(
 
     // Dialogs
     if (viewModel.isPunchDialogOpen && viewModel.selectedDayResult != null) {
+        val selDay = viewModel.selectedDayResult!!
+        val firstPunch = selDay.punches.firstOrNull()
+        val lastPunch = selDay.punches.lastOrNull()
+        val dayLocation = firstPunch?.locationDescription ?: lastPunch?.locationDescription ?: "Escritório"
+        val nextType = when (lastPunch?.type) {
+            null -> com.clockinreminder.app.data.local.entity.PunchType.ENTRY
+            com.clockinreminder.app.data.local.entity.PunchType.ENTRY -> com.clockinreminder.app.data.local.entity.PunchType.LUNCH_OUT
+            com.clockinreminder.app.data.local.entity.PunchType.LUNCH_OUT -> com.clockinreminder.app.data.local.entity.PunchType.LUNCH_RETURN
+            com.clockinreminder.app.data.local.entity.PunchType.LUNCH_RETURN -> com.clockinreminder.app.data.local.entity.PunchType.EXIT
+            com.clockinreminder.app.data.local.entity.PunchType.EXIT -> com.clockinreminder.app.data.local.entity.PunchType.ENTRY
+        }
         ManualPunchDialog(
-            initialDate = viewModel.selectedDayResult!!.date,
+            initialDate = selDay.date,
+            suggestedType = nextType,
+            suggestedLocation = dayLocation,
             onDismiss = { viewModel.isPunchDialogOpen = false },
             onSave = { date, time, type, note, loc ->
                 viewModel.saveManualPunch(date, time, type, note, loc)

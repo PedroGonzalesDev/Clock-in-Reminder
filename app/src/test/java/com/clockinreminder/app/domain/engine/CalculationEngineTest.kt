@@ -212,6 +212,97 @@ class CalculationEngineTest {
     }
 
     @Test
+    fun testMunicipalHolidayAndFolgaWorkReceives100Percent() {
+        val date = LocalDate.of(2026, 10, 7) // Wednesday
+        val punches = listOf(
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(8, 0), timestampEpochMs = 1, type = PunchType.ENTRY),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(12, 0), timestampEpochMs = 2, type = PunchType.LUNCH_OUT),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(13, 0), timestampEpochMs = 3, type = PunchType.LUNCH_RETURN),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(17, 0), timestampEpochMs = 4, type = PunchType.EXIT)
+        )
+
+        // Case 1: Marked as DayType.FERIADO (e.g. municipal holiday)
+        val holidayOccurrence = DayOccurrenceEntity(
+            profileId = 1,
+            date = date,
+            type = DayType.FERIADO,
+            note = "Feriado Municipal de Aniversário da Cidade"
+        )
+        val resultHoliday = CalculationEngine.calculateDay(
+            date = date,
+            punches = punches,
+            schedule = defaultSchedule,
+            scheduleDay = weekdaySchedule,
+            payRule = defaultPayRule,
+            bankPolicy = null,
+            occurrence = holidayOccurrence,
+            holiday = null
+        )
+
+        // 8h worked (480 min) on a holiday -> 0 expected, all 480 min as overtime100
+        assertEquals(480, resultHoliday.workedMinutes)
+        assertEquals(0, resultHoliday.expectedMinutes)
+        assertEquals(0, resultHoliday.normalMinutes)
+        assertEquals(480, resultHoliday.overtime100Minutes)
+        assertEquals(480, resultHoliday.dailyBalanceMinutes)
+
+        // Case 2: Marked as DayType.FOLGA (e.g. day off worked in 6x1 or 6x2 scale)
+        val folgaOccurrence = DayOccurrenceEntity(
+            profileId = 1,
+            date = date,
+            type = DayType.FOLGA,
+            note = "Folga Trabalhada Escala 6x1"
+        )
+        val resultFolga = CalculationEngine.calculateDay(
+            date = date,
+            punches = punches,
+            schedule = defaultSchedule,
+            scheduleDay = weekdaySchedule,
+            payRule = defaultPayRule,
+            bankPolicy = null,
+            occurrence = folgaOccurrence,
+            holiday = null
+        )
+
+        // 8h worked on a day off (Folga) -> all 480 min count as 100% overtime
+        assertEquals(480, resultFolga.workedMinutes)
+        assertEquals(0, resultFolga.expectedMinutes)
+        assertEquals(0, resultFolga.normalMinutes)
+        assertEquals(480, resultFolga.overtime100Minutes)
+        assertEquals(480, resultFolga.dailyBalanceMinutes)
+    }
+
+    @Test
+    fun testMoreThanFourPunchesCalculation() {
+        val date = LocalDate.of(2026, 10, 8)
+        // 6 punches: 3 work intervals (08:00-12:00 = 4h, 13:00-17:00 = 4h, 18:00-20:00 = 2h) = 10h worked
+        val punches = listOf(
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(8, 0), timestampEpochMs = 1, type = PunchType.ENTRY),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(12, 0), timestampEpochMs = 2, type = PunchType.LUNCH_OUT),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(13, 0), timestampEpochMs = 3, type = PunchType.LUNCH_RETURN),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(17, 0), timestampEpochMs = 4, type = PunchType.EXIT),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(18, 0), timestampEpochMs = 5, type = PunchType.ENTRY),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(20, 0), timestampEpochMs = 6, type = PunchType.EXIT)
+        )
+
+        val result = CalculationEngine.calculateDay(
+            date = date,
+            punches = punches,
+            schedule = defaultSchedule,
+            scheduleDay = weekdaySchedule,
+            payRule = defaultPayRule,
+            bankPolicy = null,
+            occurrence = null,
+            holiday = null
+        )
+
+        assertEquals(600, result.workedMinutes) // 10 hours
+        assertEquals(540, result.expectedMinutes)
+        assertEquals(540, result.normalMinutes)
+        assertEquals(60, result.overtime50Minutes) // 1 hour extra
+    }
+
+    @Test
     fun testFormatMinutes() {
         assertEquals("+01:30", CalculationEngine.formatMinutesToHours(90, withSign = true))
         assertEquals("−00:45", CalculationEngine.formatMinutesToHours(-45, withSign = true))

@@ -48,6 +48,7 @@ class SettingsViewModel(
     // Edit fields
     var employeeName by mutableStateOf("")
     var companyName by mutableStateOf("")
+    var workWeekends by mutableStateOf(false)
     var hourlyRateText by mutableStateOf("25,74")
     var standardOtText by mutableStateOf("50")
     var saturdayOtText by mutableStateOf("60")
@@ -88,6 +89,14 @@ class SettingsViewModel(
                 isBankEnabled = bank.isEnabled
                 sendOvertimeToBank = bank.sendOvertimeToBank
             }
+
+            val schedule = repository.getEffectiveSchedule(LocalDate.now())
+            if (schedule != null) {
+                val days = repository.getScheduleDays(schedule.id)
+                val sat = days.find { it.dayOfWeek == 6 }?.isWorkDay ?: false
+                val sun = days.find { it.dayOfWeek == 7 }?.isWorkDay ?: false
+                workWeekends = sat || sun
+            }
         }
     }
 
@@ -114,8 +123,30 @@ class SettingsViewModel(
             )
             repository.saveBankPolicy(updatedBank)
 
-            // Reschedule reminders
+            // Save work schedule weekend preferences
             val schedule = repository.getEffectiveSchedule(LocalDate.now())
+            if (schedule != null) {
+                val existingDays = repository.getScheduleDays(schedule.id)
+                val updatedDays = (1..7).map { dow ->
+                    val isWork = when (dow) {
+                        in 1..5 -> true
+                        else -> workWeekends
+                    }
+                    val existing = existingDays.find { it.dayOfWeek == dow }
+                    existing?.copy(
+                        isWorkDay = isWork,
+                        expectedMinutes = if (isWork) (existing.expectedMinutes.takeIf { it > 0 } ?: schedule.dailyHoursTargetMinutes) else 0
+                    ) ?: ScheduleDayEntity(
+                        scheduleId = schedule.id,
+                        dayOfWeek = dow,
+                        isWorkDay = isWork,
+                        expectedMinutes = if (isWork) schedule.dailyHoursTargetMinutes else 0
+                    )
+                }
+                repository.saveScheduleWithDays(schedule, updatedDays)
+            }
+
+            // Reschedule reminders
             val scheduleDays = schedule?.let { repository.getScheduleDays(it.id) } ?: emptyList()
             ReminderScheduler.scheduleRemindersForSchedule(context, scheduleDays)
 
@@ -254,6 +285,67 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Work Schedule & Weekends Section
+            SettingsSectionHeader(title = "ESCALA DE TRABALHO E FINS DE SEMANA")
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Configuração da sua Escala:",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    // Option 1: Does not work weekends
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.workWeekends = false }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = !viewModel.workWeekends,
+                            onClick = { viewModel.workWeekends = false }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Não trabalho sábado e domingo", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Text("Segunda a Sexta (5x2). Fins de semana são folgas automáticas.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+
+                    // Option 2: Works weekends / scale
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.workWeekends = true }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = viewModel.workWeekends,
+                            onClick = { viewModel.workWeekends = true }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Também trabalho sábado e domingo", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Text("Escalas 6x1, 6x2 ou flexível. Você inputa suas folgas no dia/calendário (folgas trabalhadas contam 100%).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             }
 

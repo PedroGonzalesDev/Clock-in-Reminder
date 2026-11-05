@@ -34,8 +34,8 @@ object CsvExporter {
             writer.write("Competência;${summary.yearMonth.monthValue}/${summary.yearMonth.year}\n")
             writer.write("\n")
 
-            // Table headers
-            writer.write("Data;Dia da Semana;Tipo;Entrada 1;Saída 1;Entrada 2;Saída 2;Outras Marcações;Previstas;Trabalhadas;Normais;Extras 50%;Extras 60%;Extras 100%;Noturnas (Civil);Noturnas (Red.);Saldo Dia;Observações\n")
+            // Table headers (without Previstas, Normais, Saldo Dia)
+            writer.write("Data;Dia da Semana;Tipo;Entrada 1;Saída 1;Entrada 2;Saída 2;Entrada 3;Saída 3;Entrada 4;Saída 4;Outras Marcações;Trabalhadas;Extras 50%;Extras 60%;Extras 100%;Noturnas (Red.);Observações\n")
 
             // Rows
             val dayOfWeekNames = mapOf(
@@ -58,28 +58,34 @@ object CsvExporter {
                 val s1 = punches.getOrNull(1)?.time?.toString() ?: ""
                 val e2 = punches.getOrNull(2)?.time?.toString() ?: ""
                 val s2 = punches.getOrNull(3)?.time?.toString() ?: ""
-                val otherPunches = if (punches.size > 4) {
-                    punches.subList(4, punches.size).joinToString(" | ") { "${it.type}: ${it.time}" }
+                val e3 = punches.getOrNull(4)?.time?.toString() ?: ""
+                val s3 = punches.getOrNull(5)?.time?.toString() ?: ""
+                val e4 = punches.getOrNull(6)?.time?.toString() ?: ""
+                val s4 = punches.getOrNull(7)?.time?.toString() ?: ""
+
+                val otherPunches = if (punches.size > 8) {
+                    punches.subList(8, punches.size).joinToString(" | ") { "${it.type}: ${it.time}" }
                 } else ""
 
-                val prev = CalculationEngine.formatMinutesToHours(day.expectedMinutes)
                 val trab = CalculationEngine.formatMinutesToHours(day.workedMinutes)
-                val norm = CalculationEngine.formatMinutesToHours(day.normalMinutes)
-                val ot50 = CalculationEngine.formatMinutesToHours(day.overtime50Minutes)
-                val ot60 = CalculationEngine.formatMinutesToHours(day.overtime60Minutes)
-                val ot100 = CalculationEngine.formatMinutesToHours(day.overtime100Minutes)
-                val notCivil = CalculationEngine.formatMinutesToHours(day.nightMinutesCivil)
-                val notRed = CalculationEngine.formatMinutesToHours(day.nightMinutesReduced)
-                val saldo = CalculationEngine.formatMinutesToHours(day.dailyBalanceMinutes, withSign = true)
-                val obs = day.occurrence?.note ?: day.holiday?.name ?: ""
+                val ot50 = if (day.overtime50Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime50Minutes) else "—"
+                val ot60 = if (day.overtime60Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime60Minutes) else "—"
+                val ot100 = if (day.overtime100Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime100Minutes) else "—"
+                val notRed = if (day.nightMinutesReduced > 0) CalculationEngine.formatMinutesToHours(day.nightMinutesReduced) else "—"
 
-                writer.write("$dateStr;$dayOfWeekStr;$typeStr;$e1;$s1;$e2;$s2;$otherPunches;$prev;$trab;$norm;$ot50;$ot60;$ot100;$notCivil;$notRed;$saldo;$obs\n")
+                val punchNotes = day.punches.mapNotNull { it.note?.trim() }.filter { it.isNotEmpty() }
+                val allNotes = mutableListOf<String>()
+                if (day.holiday != null) allNotes.add(day.holiday.name)
+                if (day.occurrence != null && !day.occurrence.note.isNullOrBlank()) allNotes.add(day.occurrence.note)
+                allNotes.addAll(punchNotes)
+                val obs = allNotes.joinToString(" / ")
+
+                writer.write("$dateStr;$dayOfWeekStr;$typeStr;$e1;$s1;$e2;$s2;$e3;$s3;$e4;$s4;$otherPunches;$trab;$ot50;$ot60;$ot100;$notRed;$obs\n")
             }
 
             // Summary row
             writer.write("\n")
             writer.write("TOTAIS DO MÊS;;;;\n")
-            writer.write("Total Horas Previstas;${CalculationEngine.formatMinutesToHours(summary.totalExpectedMinutes)}\n")
             writer.write("Total Horas Trabalhadas;${CalculationEngine.formatMinutesToHours(summary.totalWorkedMinutes)}\n")
             writer.write("Total Horas Normais;${CalculationEngine.formatMinutesToHours(summary.totalNormalMinutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalNormalPayCents)}\n")
             writer.write("Total Horas Extras 50%;${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}\n")
@@ -87,8 +93,6 @@ object CsvExporter {
             writer.write("Total Horas Extras 100%;${CalculationEngine.formatMinutesToHours(summary.totalOt100Minutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalOt100PayCents)}\n")
             writer.write("Total Adicional Noturno;${CalculationEngine.formatMinutesToHours(summary.totalNightMinutesReduced)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalNightBonusPayCents)}\n")
             writer.write("TOTAL BRUTO ESTIMADO;;;${CalculationEngine.formatCentsToCurrency(summary.totalGrossPayCents)}\n")
-            writer.write("Saldo de Banco Inicial;${CalculationEngine.formatMinutesToHours(summary.startingBankMinutes.toInt(), withSign = true)}\n")
-            writer.write("Saldo de Banco Final;${CalculationEngine.formatMinutesToHours(summary.closingBankMinutes.toInt(), withSign = true)}\n")
             writer.write("\n")
             writer.write("Aviso legal: Este documento é um controle pessoal gerado pelo Clock in Reminder e não substitui os sistemas oficiais de registro de ponto do empregador.\n")
         }

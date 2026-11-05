@@ -119,7 +119,9 @@ object CalculationEngine {
         val expectedMinutes = when {
             occurrence != null && occurrence.isPaidAbsence -> 0 // Handled as paid absence, no penalty
             occurrence != null && occurrence.type == DayType.FALTA -> scheduleDay?.expectedMinutes ?: 540
+            occurrence != null && (occurrence.type == DayType.FERIADO || occurrence.type == DayType.FOLGA || occurrence.type == DayType.DSR) -> 0
             isHoliday -> 0
+            effectiveDayType == DayType.FOLGA || effectiveDayType == DayType.FERIADO || effectiveDayType == DayType.DSR -> 0
             schedule?.isHoursOnly == true -> schedule.dailyHoursTargetMinutes
             scheduleDay != null && scheduleDay.isWorkDay -> scheduleDay.expectedMinutes
             else -> 0
@@ -152,12 +154,12 @@ object CalculationEngine {
         var ot100Min = 0
 
         when {
-            // Holiday or Sunday: all worked hours are 100%
-            isHoliday || effectiveDayType == DayType.FERIADO || isSunday || effectiveDayType == DayType.DSR -> {
+            // Holiday (including municipal/manual), DSR or Sunday: all worked hours are 100%
+            isHoliday || effectiveDayType == DayType.FERIADO || effectiveDayType == DayType.DSR || isSunday -> {
                 ot100Min = totalWorkedMinutes
             }
 
-            // Saturday:
+            // Saturday: Pedro's rule - 60% overtime rate
             isSaturday -> {
                 if (scheduleDay != null && scheduleDay.isWorkDay) {
                     // Scheduled Saturday workday: normal up to expected, excess 60%
@@ -167,6 +169,11 @@ object CalculationEngine {
                     // Non-scheduled Saturday: 60% overtime
                     ot60Min = totalWorkedMinutes
                 }
+            }
+
+            // Day off in scale (Folga trabalhada em escala 6x1, 6x2): 100%
+            effectiveDayType == DayType.FOLGA -> {
+                ot100Min = totalWorkedMinutes
             }
 
             // Normal weekday:
@@ -196,7 +203,7 @@ object CalculationEngine {
         val dailyBalanceMinutes = when {
             occurrence != null && occurrence.type == DayType.FALTA -> -expectedMinutes
             occurrence != null && occurrence.type.isAbsence -> 0 // Paid absence (Férias, Atestado, etc.)
-            effectiveDayType == DayType.FOLGA || effectiveDayType == DayType.FERIADO -> totalWorkedMinutes
+            effectiveDayType == DayType.FOLGA || effectiveDayType == DayType.FERIADO || effectiveDayType == DayType.DSR -> totalWorkedMinutes
             else -> totalWorkedMinutes - expectedMinutes
         }
 

@@ -316,13 +316,14 @@ fun ReportsScreen(
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(vertical = 10.dp, horizontal = 8.dp)
                         ) {
-                            val cols = listOf("Data", "Dia", "Tipo", "E1", "S1", "E2", "S2", "Prev.", "Trab.", "Norm.", "Ex.50%", "Ex.60%", "Ex.100%", "Not.", "Saldo", "Obs.")
-                            val colWidths = listOf(56, 36, 68, 48, 48, 48, 48, 52, 52, 52, 52, 52, 52, 52, 56, 120)
+                            val cols = listOf("Data", "Dia", "Tipo", "E1", "S1", "E2", "S2", "E3", "S3", "E4", "S4", "Trab.", "Ex.50%", "Ex.60%", "Ex.100%", "Not.", "Observações")
+                            val colWidths = listOf(52, 36, 64, 44, 44, 44, 44, 44, 44, 44, 44, 52, 52, 52, 54, 48, 160)
 
                             cols.forEachIndexed { i, title ->
+                                val align = if (i in 3..15) androidx.compose.ui.text.style.TextAlign.Center else androidx.compose.ui.text.style.TextAlign.Start
                                 Text(
                                     text = title,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, textAlign = align),
                                     modifier = Modifier.width(colWidths[i].dp)
                                 )
                             }
@@ -335,6 +336,21 @@ fun ReportsScreen(
                             val s1 = punches.getOrNull(1)?.time?.toString() ?: "—"
                             val e2 = punches.getOrNull(2)?.time?.toString() ?: "—"
                             val s2 = punches.getOrNull(3)?.time?.toString() ?: "—"
+                            val e3 = punches.getOrNull(4)?.time?.toString() ?: "—"
+                            val s3 = punches.getOrNull(5)?.time?.toString() ?: "—"
+                            val e4 = punches.getOrNull(6)?.time?.toString() ?: "—"
+                            val s4 = punches.getOrNull(7)?.time?.toString() ?: "—"
+
+                            val punchNotes = day.punches.mapNotNull { it.note?.trim() }.filter { it.isNotEmpty() }
+                            val allNotes = mutableListOf<String>()
+                            if (day.holiday != null) allNotes.add(day.holiday.name)
+                            if (day.occurrence != null && !day.occurrence.note.isNullOrBlank()) allNotes.add(day.occurrence.note)
+                            allNotes.addAll(punchNotes)
+                            if (day.punches.size > 8) {
+                                val extraPunches = day.punches.drop(8).joinToString(", ") { "${it.time}" }
+                                allNotes.add("Outras: $extraPunches")
+                            }
+                            val obs = allNotes.joinToString(" / ")
 
                             Row(
                                 modifier = Modifier
@@ -342,26 +358,27 @@ fun ReportsScreen(
                                     .padding(vertical = 8.dp, horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(day.date.format(DateTimeFormatter.ofPattern("dd/MM")), style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace), modifier = Modifier.width(56.dp))
+                                Text(day.date.format(DateTimeFormatter.ofPattern("dd/MM")), style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace), modifier = Modifier.width(52.dp))
                                 Text(dayOfWeekAbbr[day.date.dayOfWeek] ?: "", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(36.dp))
-                                Text(day.dayType.labelPtBr.take(8), style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), modifier = Modifier.width(68.dp))
-                                Text(e1, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp), modifier = Modifier.width(48.dp))
-                                Text(s1, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp), modifier = Modifier.width(48.dp))
-                                Text(e2, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp), modifier = Modifier.width(48.dp))
-                                Text(s2, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp), modifier = Modifier.width(48.dp))
-                                Text(CalculationEngine.formatMinutesToHours(day.expectedMinutes), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(52.dp))
-                                Text(CalculationEngine.formatMinutesToHours(day.workedMinutes), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), modifier = Modifier.width(52.dp))
-                                Text(CalculationEngine.formatMinutesToHours(day.normalMinutes), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(52.dp))
-                                Text(if (day.overtime50Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime50Minutes) else "—", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(52.dp))
-                                Text(if (day.overtime60Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime60Minutes) else "—", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(52.dp))
-                                Text(if (day.overtime100Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime100Minutes) else "—", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(52.dp))
-                                Text(if (day.nightMinutesReduced > 0) CalculationEngine.formatMinutesToHours(day.nightMinutesReduced) else "—", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(52.dp))
+                                Text(day.dayType.labelPtBr.take(8), style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), modifier = Modifier.width(64.dp))
 
-                                val saldoColor = if (day.dailyBalanceMinutes > 0) ControlledGreen else if (day.dailyBalanceMinutes < 0) ControlledRed else MaterialTheme.colorScheme.onSurface
-                                Text(CalculationEngine.formatMinutesToHours(day.dailyBalanceMinutes, withSign = true), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = saldoColor, modifier = Modifier.width(56.dp))
+                                val centerAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                Text(e1, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
+                                Text(s1, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
+                                Text(e2, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
+                                Text(s2, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
+                                Text(e3, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
+                                Text(s3, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
+                                Text(e4, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
+                                Text(s4, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(44.dp))
 
-                                val obs = day.occurrence?.note ?: day.holiday?.name ?: ""
-                                Text(obs, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), modifier = Modifier.width(120.dp), maxLines = 1)
+                                Text(CalculationEngine.formatMinutesToHours(day.workedMinutes), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(52.dp))
+                                Text(if (day.overtime50Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime50Minutes) else "—", style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(52.dp))
+                                Text(if (day.overtime60Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime60Minutes) else "—", style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(52.dp))
+                                Text(if (day.overtime100Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime100Minutes) else "—", style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(54.dp))
+                                Text(if (day.nightMinutesReduced > 0) CalculationEngine.formatMinutesToHours(day.nightMinutesReduced) else "—", style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, textAlign = centerAlign), modifier = Modifier.width(48.dp))
+
+                                Text(obs, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), modifier = Modifier.width(160.dp), maxLines = 1)
                             }
                         }
                     }

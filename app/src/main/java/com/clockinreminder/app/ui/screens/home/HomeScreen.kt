@@ -98,12 +98,15 @@ class HomeViewModel(
     fun registerContextualPunch() {
         val nextType = getNextPunchType()
         viewModelScope.launch {
+            val firstPunch = punches.firstOrNull { !it.isDeleted }
+            val lastPunch = punches.lastOrNull { !it.isDeleted }
+            val dayLocation = firstPunch?.locationDescription ?: lastPunch?.locationDescription ?: "Escritório"
             repository.registerPunch(
                 date = selectedDate,
                 time = LocalTime.now().withSecond(0).withNano(0),
                 type = nextType,
                 source = PunchSource.AUTOMATIC,
-                locationDescription = "Registrado no dispositivo"
+                locationDescription = dayLocation
             )
             loadDataForDate(selectedDate)
         }
@@ -550,9 +553,15 @@ fun HomeScreen(
 
     // Dialogs
     if (viewModel.isPunchDialogOpen) {
+        val firstPunch = viewModel.punches.firstOrNull { !it.isDeleted }
+        val lastPunch = viewModel.punches.lastOrNull { !it.isDeleted }
+        val dayLocation = firstPunch?.locationDescription ?: lastPunch?.locationDescription ?: "Escritório"
+        val nextType = viewModel.getNextPunchType()
         ManualPunchDialog(
             initialDate = viewModel.selectedDate,
             editingPunch = viewModel.editingPunch,
+            suggestedType = nextType,
+            suggestedLocation = dayLocation,
             onDismiss = { viewModel.isPunchDialogOpen = false },
             onSave = { date, time, type, note, loc ->
                 viewModel.saveManualPunch(date, time, type, note, loc)

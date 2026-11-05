@@ -49,51 +49,75 @@ object PdfExporter {
             var y = margin
 
             // Draw Header Banner
+            paint.textAlign = Paint.Align.LEFT
             paint.color = Color.parseColor("#142431")
             canvas.drawRect(margin, y, pageWidth - margin, y + 42f, paint)
 
             paint.color = Color.WHITE
-            paint.textSize = 14f
+            paint.textSize = 13f
             paint.isFakeBoldText = true
             canvas.drawText("CLOCK IN REMINDER — CONTROLE DE PONTO MENSAL", margin + 12f, y + 18f, paint)
 
-            paint.textSize = 9f
+            paint.textSize = 8.5f
             paint.isFakeBoldText = false
             paint.color = Color.parseColor("#D58D63")
             canvas.drawText("Empresa: $companyName  |  Funcionário: $employeeName  |  Competência: ${summary.yearMonth.monthValue}/${summary.yearMonth.year}", margin + 12f, y + 34f, paint)
 
-            y += 54f
+            y += 52f
 
             // Table Header Bar
             paint.color = Color.parseColor("#187B77")
             canvas.drawRect(margin, y, pageWidth - margin, y + 18f, paint)
 
             paint.color = Color.WHITE
-            paint.textSize = 7.5f
+            paint.textSize = 7f
             paint.isFakeBoldText = true
 
-            val colX = floatArrayOf(
-                margin + 4f,    // Data
-                margin + 34f,   // Dia
-                margin + 62f,   // E1
-                margin + 92f,   // S1
-                margin + 122f,  // E2
-                margin + 152f,  // S2
-                margin + 182f,  // Prev
-                margin + 214f,  // Trab
-                margin + 246f,  // Norm
-                margin + 278f,  // Ex50
-                margin + 310f,  // Ex60
-                margin + 342f,  // Ex100
-                margin + 376f,  // Not
-                margin + 410f,  // Saldo
-                margin + 448f   // Obs
-            )
+            // Column Centers & Positions
+            val dataLeft = margin + 4f
+            val diaLeft = margin + 30f
 
-            val headers = arrayOf("Data", "Dia", "Ent. 1", "Saí. 1", "Ent. 2", "Saí. 2", "Prev.", "Trab.", "Norm.", "Ex.50%", "Ex.60%", "Ex.100%", "Not.", "Saldo", "Observações")
-            for (i in headers.indices) {
-                canvas.drawText(headers[i], colX[i], y + 12f, paint)
-            }
+            // Centers for punches E1..S4
+            val e1Center = margin + 58f
+            val s1Center = margin + 83f
+            val e2Center = margin + 108f
+            val s2Center = margin + 133f
+            val e3Center = margin + 158f
+            val s3Center = margin + 183f
+            val e4Center = margin + 208f
+            val s4Center = margin + 233f
+
+            // Centers for hours
+            val trabCenter = margin + 266f
+            val ot50Center = margin + 298f
+            val ot60Center = margin + 328f
+            val ot100Center = margin + 360f
+            val notCenter = margin + 392f
+
+            val obsLeft = margin + 414f
+
+            // Draw Headers
+            paint.textAlign = Paint.Align.LEFT
+            canvas.drawText("Data", dataLeft, y + 12f, paint)
+            canvas.drawText("Dia", diaLeft, y + 12f, paint)
+
+            paint.textAlign = Paint.Align.CENTER
+            canvas.drawText("E1", e1Center, y + 12f, paint)
+            canvas.drawText("S1", s1Center, y + 12f, paint)
+            canvas.drawText("E2", e2Center, y + 12f, paint)
+            canvas.drawText("S2", s2Center, y + 12f, paint)
+            canvas.drawText("E3", e3Center, y + 12f, paint)
+            canvas.drawText("S3", s3Center, y + 12f, paint)
+            canvas.drawText("E4", e4Center, y + 12f, paint)
+            canvas.drawText("S4", s4Center, y + 12f, paint)
+            canvas.drawText("Trab.", trabCenter, y + 12f, paint)
+            canvas.drawText("Ex.50%", ot50Center, y + 12f, paint)
+            canvas.drawText("Ex.60%", ot60Center, y + 12f, paint)
+            canvas.drawText("Ex.100%", ot100Center, y + 12f, paint)
+            canvas.drawText("Not.", notCenter, y + 12f, paint)
+
+            paint.textAlign = Paint.Align.LEFT
+            canvas.drawText("Observações", obsLeft, y + 12f, paint)
 
             y += 22f
 
@@ -118,6 +142,10 @@ object PdfExporter {
                 val s1 = punches.getOrNull(1)?.time?.toString() ?: "—"
                 val e2 = punches.getOrNull(2)?.time?.toString() ?: "—"
                 val s2 = punches.getOrNull(3)?.time?.toString() ?: "—"
+                val e3 = punches.getOrNull(4)?.time?.toString() ?: "—"
+                val s3 = punches.getOrNull(5)?.time?.toString() ?: "—"
+                val e4 = punches.getOrNull(6)?.time?.toString() ?: "—"
+                val s4 = punches.getOrNull(7)?.time?.toString() ?: "—"
 
                 // Row background striping
                 if (i % 2 == 1) {
@@ -130,105 +158,119 @@ object PdfExporter {
                 paint.strokeWidth = 0.5f
                 canvas.drawLine(margin, y + rowHeight - 2f, pageWidth - margin, y + rowHeight - 2f, paint)
 
-                paint.color = Color.parseColor("#121B22")
-                paint.textSize = 7.5f
-
                 val dateStr = day.date.format(dateFormatter)
                 val dayStr = dayOfWeekAbbr[day.date.dayOfWeek] ?: ""
-                val prevStr = CalculationEngine.formatMinutesToHours(day.expectedMinutes)
                 val trabStr = CalculationEngine.formatMinutesToHours(day.workedMinutes)
-                val normStr = CalculationEngine.formatMinutesToHours(day.normalMinutes)
                 val ot50Str = if (day.overtime50Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime50Minutes) else "—"
                 val ot60Str = if (day.overtime60Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime60Minutes) else "—"
                 val ot100Str = if (day.overtime100Minutes > 0) CalculationEngine.formatMinutesToHours(day.overtime100Minutes) else "—"
                 val notStr = if (day.nightMinutesReduced > 0) CalculationEngine.formatMinutesToHours(day.nightMinutesReduced) else "—"
-                val saldoStr = CalculationEngine.formatMinutesToHours(day.dailyBalanceMinutes, withSign = true)
-                val obs = (day.occurrence?.note ?: day.holiday?.name ?: "").take(18)
 
-                canvas.drawText(dateStr, colX[0], y + 9f, paint)
-                canvas.drawText(dayStr, colX[1], y + 9f, paint)
-                canvas.drawText(e1, colX[2], y + 9f, paint)
-                canvas.drawText(s1, colX[3], y + 9f, paint)
-                canvas.drawText(e2, colX[4], y + 9f, paint)
-                canvas.drawText(s2, colX[5], y + 9f, paint)
-                canvas.drawText(prevStr, colX[6], y + 9f, paint)
-                canvas.drawText(trabStr, colX[7], y + 9f, paint)
-                canvas.drawText(normStr, colX[8], y + 9f, paint)
-                canvas.drawText(ot50Str, colX[9], y + 9f, paint)
-                canvas.drawText(ot60Str, colX[10], y + 9f, paint)
-                canvas.drawText(ot100Str, colX[11], y + 9f, paint)
-                canvas.drawText(notStr, colX[12], y + 9f, paint)
-
-                // Saldo color
-                if (day.dailyBalanceMinutes > 0) {
-                    paint.color = Color.parseColor("#2E7D32")
-                } else if (day.dailyBalanceMinutes < 0) {
-                    paint.color = Color.parseColor("#C74B4B")
+                // Concatenate observations from punches separated by / plus day notes
+                val punchNotes = day.punches.mapNotNull { it.note?.trim() }.filter { it.isNotEmpty() }
+                val allNotes = mutableListOf<String>()
+                if (day.holiday != null) allNotes.add(day.holiday.name)
+                if (day.occurrence != null && !day.occurrence.note.isNullOrBlank()) allNotes.add(day.occurrence.note)
+                allNotes.addAll(punchNotes)
+                if (day.punches.size > 8) {
+                    val extraPunches = day.punches.drop(8).joinToString(", ") { "${it.time}" }
+                    allNotes.add("Outras: $extraPunches")
                 }
-                canvas.drawText(saldoStr, colX[13], y + 9f, paint)
+                val obs = allNotes.joinToString(" / ")
 
+                paint.textSize = 7f
+                paint.color = Color.parseColor("#121B22")
+
+                // Left aligned Date & Day
+                paint.textAlign = Paint.Align.LEFT
+                canvas.drawText(dateStr, dataLeft, y + 9f, paint)
+                canvas.drawText(dayStr, diaLeft, y + 9f, paint)
+
+                // Center aligned punches (perfect vertical column alignment)
+                paint.textAlign = Paint.Align.CENTER
+                canvas.drawText(e1, e1Center, y + 9f, paint)
+                canvas.drawText(s1, s1Center, y + 9f, paint)
+                canvas.drawText(e2, e2Center, y + 9f, paint)
+                canvas.drawText(s2, s2Center, y + 9f, paint)
+                canvas.drawText(e3, e3Center, y + 9f, paint)
+                canvas.drawText(s3, s3Center, y + 9f, paint)
+                canvas.drawText(e4, e4Center, y + 9f, paint)
+                canvas.drawText(s4, s4Center, y + 9f, paint)
+
+                // Center aligned hours
+                paint.isFakeBoldText = true
+                canvas.drawText(trabStr, trabCenter, y + 9f, paint)
+                paint.isFakeBoldText = false
+                canvas.drawText(ot50Str, ot50Center, y + 9f, paint)
+                canvas.drawText(ot60Str, ot60Center, y + 9f, paint)
+                canvas.drawText(ot100Str, ot100Center, y + 9f, paint)
+                canvas.drawText(notStr, notCenter, y + 9f, paint)
+
+                // Left aligned observations
+                paint.textAlign = Paint.Align.LEFT
                 paint.color = Color.parseColor("#5A6975")
-                canvas.drawText(obs, colX[14], y + 9f, paint)
+                val truncatedObs = if (obs.length > 32) obs.take(31) + "…" else obs
+                canvas.drawText(truncatedObs, obsLeft, y + 9f, paint)
 
                 y += rowHeight
             }
 
             dayIndex = endDayIndex
 
-            // If last page, draw Summary Card & Legal note
+            // If last page, draw Summary Box & Legal note
             if (pageNumber == totalPages) {
-                y += 10f
+                y += 12f
 
                 // Summary Box
                 paint.color = Color.parseColor("#EFECE3")
-                canvas.drawRect(margin, y, pageWidth - margin, y + 115f, paint)
+                canvas.drawRect(margin, y, pageWidth - margin, y + 96f, paint)
 
                 paint.color = Color.parseColor("#187B77")
                 paint.strokeWidth = 1.5f
                 paint.style = Paint.Style.STROKE
-                canvas.drawRect(margin, y, pageWidth - margin, y + 115f, paint)
+                canvas.drawRect(margin, y, pageWidth - margin, y + 96f, paint)
                 paint.style = Paint.Style.FILL
 
                 paint.color = Color.parseColor("#142431")
                 paint.textSize = 9.5f
                 paint.isFakeBoldText = true
-                canvas.drawText("RESUMO GERAL E MEMÓRIA DE CÁLCULO ESTIMADA", margin + 10f, y + 16f, paint)
+                paint.textAlign = Paint.Align.LEFT
+                canvas.drawText("RESUMO GERAL E MEMÓRIA DE CÁLCULO ESTIMADA", margin + 12f, y + 16f, paint)
 
                 paint.isFakeBoldText = false
                 paint.textSize = 8f
 
-                val col1X = margin + 10f
-                val col2X = margin + 270f
+                val col1X = margin + 12f
+                val col2X = margin + 280f
 
-                canvas.drawText("Total Horas Previstas: ${CalculationEngine.formatMinutesToHours(summary.totalExpectedMinutes)}", col1X, y + 32f, paint)
-                canvas.drawText("Total Horas Trabalhadas: ${CalculationEngine.formatMinutesToHours(summary.totalWorkedMinutes)}", col1X, y + 46f, paint)
-                canvas.drawText("Remuneração Normal: ${CalculationEngine.formatMinutesToHours(summary.totalNormalMinutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalNormalPayCents)}", col1X, y + 60f, paint)
-                canvas.drawText("Extras 50%: ${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}", col1X, y + 74f, paint)
-                canvas.drawText("Extras 60% (Sáb): ${CalculationEngine.formatMinutesToHours(summary.totalOt60Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt60PayCents)}", col1X, y + 88f, paint)
-                canvas.drawText("Extras 100% (Dom/Fer): ${CalculationEngine.formatMinutesToHours(summary.totalOt100Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt100PayCents)}", col1X, y + 102f, paint)
+                canvas.drawText("Total Horas Trabalhadas: ${CalculationEngine.formatMinutesToHours(summary.totalWorkedMinutes)}", col1X, y + 34f, paint)
+                canvas.drawText("Extras 50%: ${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}", col1X, y + 50f, paint)
+                canvas.drawText("Extras 60% (Sáb): ${CalculationEngine.formatMinutesToHours(summary.totalOt60Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt60PayCents)}", col1X, y + 66f, paint)
+                canvas.drawText("Extras 100% (Dom/Fer/Folga): ${CalculationEngine.formatMinutesToHours(summary.totalOt100Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt100PayCents)}", col1X, y + 82f, paint)
 
-                canvas.drawText("Adicional Noturno (Red.): ${CalculationEngine.formatMinutesToHours(summary.totalNightMinutesReduced)} = ${CalculationEngine.formatCentsToCurrency(summary.totalNightBonusPayCents)}", col2X, y + 32f, paint)
-                canvas.drawText("Saldo Banco Inicial: ${CalculationEngine.formatMinutesToHours(summary.startingBankMinutes.toInt(), withSign = true)}", col2X, y + 46f, paint)
-                canvas.drawText("Saldo Banco Final: ${CalculationEngine.formatMinutesToHours(summary.closingBankMinutes.toInt(), withSign = true)}", col2X, y + 60f, paint)
+                canvas.drawText("Adicional Noturno (Red.): ${CalculationEngine.formatMinutesToHours(summary.totalNightMinutesReduced)} = ${CalculationEngine.formatCentsToCurrency(summary.totalNightBonusPayCents)}", col2X, y + 34f, paint)
+                canvas.drawText("Remuneração Normal Estimada: ${CalculationEngine.formatCentsToCurrency(summary.totalNormalPayCents)}", col2X, y + 50f, paint)
 
-                paint.color = Color.parseColor("#142431")
+                paint.color = Color.parseColor("#187B77")
                 paint.isFakeBoldText = true
                 paint.textSize = 10f
-                canvas.drawText("TOTAL ESTIMADO: ${CalculationEngine.formatCentsToCurrency(summary.totalGrossPayCents)}", col2X, y + 85f, paint)
+                canvas.drawText("TOTAL ESTIMADO: ${CalculationEngine.formatCentsToCurrency(summary.totalGrossPayCents)}", col2X, y + 74f, paint)
 
-                y += 128f
+                y += 108f
 
                 // Disclaimer footer
                 paint.color = Color.parseColor("#5A6975")
                 paint.textSize = 6.5f
                 paint.isFakeBoldText = false
+                paint.textAlign = Paint.Align.LEFT
                 canvas.drawText("Aviso: Documento para controle pessoal do trabalhador, gerado por Clock in Reminder. Não substitui sistemas oficiais de folha nem registros do empregador.", margin, y, paint)
             }
 
             // Page Number Footer
             paint.color = Color.parseColor("#9FB0C0")
             paint.textSize = 7.5f
-            canvas.drawText("Página $pageNumber de $totalPages", pageWidth - margin - 60f, pageHeight - 15f, paint)
+            paint.textAlign = Paint.Align.RIGHT
+            canvas.drawText("Página $pageNumber de $totalPages", pageWidth - margin, pageHeight - 15f, paint)
 
             doc.finishPage(page)
         }
