@@ -303,6 +303,39 @@ class CalculationEngineTest {
     }
 
     @Test
+    fun testPjWeekdayOvertimeNormalRate() {
+        val pjPayRule = defaultPayRule.copy(standardOvertimePercent = 0) // 0% addition = normal hourly rate
+        val date = LocalDate.of(2026, 10, 5) // Monday
+        val punches = listOf(
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(7, 0), timestampEpochMs = 1, type = PunchType.ENTRY),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(12, 0), timestampEpochMs = 2, type = PunchType.LUNCH_OUT),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(13, 0), timestampEpochMs = 3, type = PunchType.LUNCH_RETURN),
+            PunchEntity(profileId = 1, date = date, time = LocalTime.of(18, 0), timestampEpochMs = 4, type = PunchType.EXIT)
+        )
+
+        val result = CalculationEngine.calculateDay(
+            date = date,
+            punches = punches,
+            schedule = defaultSchedule,
+            scheduleDay = weekdaySchedule,
+            payRule = pjPayRule,
+            bankPolicy = null,
+            occurrence = null,
+            holiday = null
+        )
+
+        // 10 hours worked = 600 min. 9h normal (540 min), 1h extra (60 min)
+        assertEquals(600, result.workedMinutes)
+        assertEquals(540, result.normalMinutes)
+        assertEquals(60, result.overtime50Minutes)
+
+        // As PJ (0% extra), the 1 hour of overtime is paid at normal rate: 1h * 2574 cents = 2574 cents
+        assertEquals(2574L, result.ot50PayCents)
+        // Total gross pay is 10h * R$ 25,74 = R$ 257,40 (25740 cents)
+        assertEquals(25740L, result.estimatedGrossPayCents)
+    }
+
+    @Test
     fun testFormatMinutes() {
         assertEquals("+01:30", CalculationEngine.formatMinutesToHours(90, withSign = true))
         assertEquals("−00:45", CalculationEngine.formatMinutesToHours(-45, withSign = true))

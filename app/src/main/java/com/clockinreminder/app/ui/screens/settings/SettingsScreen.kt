@@ -372,17 +372,63 @@ fun SettingsScreen(
                         singleLine = true
                     )
 
+                    // Option for Weekday Overtime: Normal Rate (PJ) vs 50% (CLT)
+                    Text(
+                        text = "Horas Extras em Dias Úteis (Segunda a Sexta):",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.standardOtText = "0" }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        RadioButton(
+                            selected = viewModel.standardOtText == "0",
+                            onClick = { viewModel.standardOtText = "0" }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Valor Normal da Hora (0% - PJ)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Text("Horas fora da jornada prevista são pagas pelo valor normal da hora base. Adicionais percentuais aplicam apenas em fins de semana, feriados e folgas.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.standardOtText = "50" }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        RadioButton(
+                            selected = viewModel.standardOtText != "0",
+                            onClick = { viewModel.standardOtText = "50" }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Adicional CLT Padrão (+50%)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Text("Horas excedentes em dias úteis recebem adicional de 50% sobre a hora base.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
-                            value = viewModel.standardOtText,
-                            onValueChange = { viewModel.standardOtText = it },
-                            label = { Text("Extra 50% (%)") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                        if (viewModel.standardOtText != "0") {
+                            OutlinedTextField(
+                                value = viewModel.standardOtText,
+                                onValueChange = { viewModel.standardOtText = it },
+                                label = { Text("Extra Dia Útil (%)") },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                        }
                         OutlinedTextField(
                             value = viewModel.saturdayOtText,
                             onValueChange = { viewModel.saturdayOtText = it },
@@ -393,7 +439,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = viewModel.sundayOtText,
                             onValueChange = { viewModel.sundayOtText = it },
-                            label = { Text("Dom/Fer (%)") },
+                            label = { Text("Dom/Fer/Folga (%)") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )

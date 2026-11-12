@@ -63,6 +63,7 @@ data class MonthSummaryResult(
     val daysAbsence: Int,
     val daysSick: Int,
     val daysVacation: Int,
+    val isWeekdayOtNormal: Boolean = false,
     val dayResults: List<DayCalculationResult>
 )
 

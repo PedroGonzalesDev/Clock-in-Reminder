@@ -245,8 +245,9 @@ fun ReportsScreen(
                             Text(CalculationEngine.formatCentsToCurrency(summary.totalNormalPayCents), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold))
                         }
                         if (summary.totalOt50Minutes > 0) {
+                            val ot50Label = if (summary.isWeekdayOtNormal) "Extras Dias Úteis (Valor Normal)" else "Extras 50%"
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Extras 50% (${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)}):", style = MaterialTheme.typography.bodySmall)
+                                Text("$ot50Label (${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)}):", style = MaterialTheme.typography.bodySmall)
                                 Text(CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold))
                             }
                         }
@@ -316,7 +317,7 @@ fun ReportsScreen(
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(vertical = 10.dp, horizontal = 8.dp)
                         ) {
-                            val cols = listOf("Data", "Dia", "Tipo", "E1", "S1", "E2", "S2", "E3", "S3", "E4", "S4", "Trab.", "Ex.50%", "Ex.60%", "Ex.100%", "Not.", "Observações")
+                            val cols = listOf("Data", "Dia", "Tipo", "E1", "S1", "E2", "S2", "E3", "S3", "E4", "S4", "Trab.", "Ex.Útil", "Ex.60%", "Ex.100%", "Not.", "Observações")
                             val colWidths = listOf(52, 36, 64, 44, 44, 44, 44, 44, 44, 44, 44, 52, 52, 52, 54, 48, 160)
 
                             cols.forEachIndexed { i, title ->

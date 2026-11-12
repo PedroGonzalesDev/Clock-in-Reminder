@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -12,10 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -39,6 +43,10 @@ fun ManualPunchDialog(
     onDelete: ((punchId: Long) -> Unit)? = null
 ) {
     val initialTime = editingPunch?.time ?: LocalTime.now()
+
+    val hourFocusRequester = remember { FocusRequester() }
+    val minuteFocusRequester = remember { FocusRequester() }
+
     var hourValue by remember {
         val str = "%02d".format(initialTime.hour)
         mutableStateOf(TextFieldValue(text = str, selection = TextRange(0, str.length)))
@@ -74,7 +82,7 @@ fun ManualPunchDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                // Time Pickers with Auto-Select All on Click / Focus
+                // Time Pickers with Auto-Replace and Auto-Jump to Minutes
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -83,39 +91,56 @@ fun ManualPunchDialog(
                     OutlinedTextField(
                         value = hourValue,
                         onValueChange = { newValue ->
-                            if (newValue.text.length <= 2 && newValue.text.all { c -> c.isDigit() }) {
-                                hourValue = newValue
+                            val digits = newValue.text.filter { it.isDigit() }
+                            if (digits.length > 2) {
+                                // If typed with existing digits, replace with the newly typed digit directly
+                                val fresh = digits.last().toString()
+                                hourValue = TextFieldValue(fresh, TextRange(fresh.length))
+                            } else {
+                                hourValue = TextFieldValue(digits, TextRange(digits.length))
+                                // As soon as 2 digits are typed, auto-jump to minutes!
+                                if (digits.length == 2) {
+                                    minuteFocusRequester.requestFocus()
+                                    minuteValue = minuteValue.copy(selection = TextRange(0, minuteValue.text.length))
+                                }
                             }
                         },
                         label = { Text("Hora") },
                         modifier = Modifier
                             .weight(1f)
+                            .focusRequester(hourFocusRequester)
                             .onFocusChanged { focusState ->
                                 if (focusState.isFocused) {
                                     hourValue = hourValue.copy(selection = TextRange(0, hourValue.text.length))
                                 }
                             },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { minuteFocusRequester.requestFocus() })
                     )
                     Text(":", style = MaterialTheme.typography.headlineMedium)
                     OutlinedTextField(
                         value = minuteValue,
                         onValueChange = { newValue ->
-                            if (newValue.text.length <= 2 && newValue.text.all { c -> c.isDigit() }) {
-                                minuteValue = newValue
+                            val digits = newValue.text.filter { it.isDigit() }
+                            if (digits.length > 2) {
+                                val fresh = digits.last().toString()
+                                minuteValue = TextFieldValue(fresh, TextRange(fresh.length))
+                            } else {
+                                minuteValue = TextFieldValue(digits, TextRange(digits.length))
                             }
                         },
                         label = { Text("Minuto") },
                         modifier = Modifier
                             .weight(1f)
+                            .focusRequester(minuteFocusRequester)
                             .onFocusChanged { focusState ->
                                 if (focusState.isFocused) {
                                     minuteValue = minuteValue.copy(selection = TextRange(0, minuteValue.text.length))
                                 }
                             },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
                     )
                 }
 

@@ -431,17 +431,57 @@ private fun StepPayRules(vm: OnboardingViewModel) {
             supportingText = { Text("Conforme planilha de referência: R$ 25,74") }
         )
 
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Horas Extras em Dias Úteis:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { vm.standardOtPercentText = "0" }
+            ) {
+                RadioButton(
+                    selected = vm.standardOtPercentText == "0",
+                    onClick = { vm.standardOtPercentText = "0" }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text("Valor Normal da Hora (0% - PJ)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Paga valor normal da hora. Extras só aplicam em fins de semana e feriados.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { vm.standardOtPercentText = "50" }
+            ) {
+                RadioButton(
+                    selected = vm.standardOtPercentText != "0",
+                    onClick = { vm.standardOtPercentText = "50" }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text("Adicional CLT Padrão (+50%)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Horas excedentes em dias úteis recebem adicional de 50%.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(
-                value = vm.standardOtPercentText,
-                onValueChange = { vm.standardOtPercentText = it },
-                label = { Text("Extra Comum (%)") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
-            )
+            if (vm.standardOtPercentText != "0") {
+                OutlinedTextField(
+                    value = vm.standardOtPercentText,
+                    onValueChange = { vm.standardOtPercentText = it },
+                    label = { Text("Extra Útil (%)") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+            }
             OutlinedTextField(
                 value = vm.saturdayOtPercentText,
                 onValueChange = { vm.saturdayOtPercentText = it },

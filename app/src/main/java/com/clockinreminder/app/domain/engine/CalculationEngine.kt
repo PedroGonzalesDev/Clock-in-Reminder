@@ -276,7 +276,8 @@ object CalculationEngine {
         yearMonth: YearMonth,
         dayResults: List<DayCalculationResult>,
         startingBankMinutes: Long,
-        adjustments: List<BankAdjustmentEntity>
+        adjustments: List<BankAdjustmentEntity>,
+        isWeekdayOtNormal: Boolean = false
     ): MonthSummaryResult {
         var totalExpected = 0
         var totalWorked = 0
@@ -373,6 +374,7 @@ object CalculationEngine {
             daysAbsence = daysAbsence,
             daysSick = daysSick,
             daysVacation = daysVacation,
+            isWeekdayOtNormal = isWeekdayOtNormal,
             dayResults = dayResults
         )
     }

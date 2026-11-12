@@ -264,7 +264,8 @@ class ClockInRepositoryImpl(
             yearMonth = yearMonth,
             dayResults = dayResults,
             startingBankMinutes = startingBank,
-            adjustments = adjustments
+            adjustments = adjustments,
+            isWeekdayOtNormal = (payRule.standardOvertimePercent == 0)
         )
     }
 

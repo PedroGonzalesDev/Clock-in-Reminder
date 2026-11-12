@@ -117,7 +117,7 @@ object ExcelExporter {
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Entrada 4</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Saída 4</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Trabalhadas</Data></Cell>
-    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Extra 50%</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Extra Útil</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Extra 60%</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Extra 100%</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Noturnas</Data></Cell>
@@ -207,7 +207,7 @@ object ExcelExporter {
     <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalNormalPayCents)}</Data></Cell>
    </Row>
    <Row ss:Height="18">
-    <Cell><Data ss:Type="String">Extras 50%:</Data></Cell>
+    <Cell><Data ss:Type="String">${if (summary.isWeekdayOtNormal) "Extras Dias Úteis (Valor Normal):" else "Extras 50%:"}</Data></Cell>
     <Cell><Data ss:Type="String">${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}</Data></Cell>
    </Row>
    <Row ss:Height="18">

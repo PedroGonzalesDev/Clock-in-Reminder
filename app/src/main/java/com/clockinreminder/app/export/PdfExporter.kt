@@ -111,7 +111,7 @@ object PdfExporter {
             canvas.drawText("E4", e4Center, y + 12f, paint)
             canvas.drawText("S4", s4Center, y + 12f, paint)
             canvas.drawText("Trab.", trabCenter, y + 12f, paint)
-            canvas.drawText("Ex.50%", ot50Center, y + 12f, paint)
+            canvas.drawText("Ex.Útil", ot50Center, y + 12f, paint)
             canvas.drawText("Ex.60%", ot60Center, y + 12f, paint)
             canvas.drawText("Ex.100%", ot100Center, y + 12f, paint)
             canvas.drawText("Not.", notCenter, y + 12f, paint)
@@ -244,7 +244,8 @@ object PdfExporter {
                 val col2X = margin + 280f
 
                 canvas.drawText("Total Horas Trabalhadas: ${CalculationEngine.formatMinutesToHours(summary.totalWorkedMinutes)}", col1X, y + 34f, paint)
-                canvas.drawText("Extras 50%: ${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}", col1X, y + 50f, paint)
+                val ot50Label = if (summary.isWeekdayOtNormal) "Extras Úteis (Normal)" else "Extras 50%"
+                canvas.drawText("$ot50Label: ${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}", col1X, y + 50f, paint)
                 canvas.drawText("Extras 60% (Sáb): ${CalculationEngine.formatMinutesToHours(summary.totalOt60Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt60PayCents)}", col1X, y + 66f, paint)
                 canvas.drawText("Extras 100% (Dom/Fer/Folga): ${CalculationEngine.formatMinutesToHours(summary.totalOt100Minutes)} = ${CalculationEngine.formatCentsToCurrency(summary.totalOt100PayCents)}", col1X, y + 82f, paint)
 

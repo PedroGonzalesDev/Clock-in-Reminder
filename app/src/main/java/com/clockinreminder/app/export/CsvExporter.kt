@@ -35,7 +35,7 @@ object CsvExporter {
             writer.write("\n")
 
             // Table headers (without Previstas, Normais, Saldo Dia)
-            writer.write("Data;Dia da Semana;Tipo;Entrada 1;Saída 1;Entrada 2;Saída 2;Entrada 3;Saída 3;Entrada 4;Saída 4;Outras Marcações;Trabalhadas;Extras 50%;Extras 60%;Extras 100%;Noturnas (Red.);Observações\n")
+            writer.write("Data;Dia da Semana;Tipo;Entrada 1;Saída 1;Entrada 2;Saída 2;Entrada 3;Saída 3;Entrada 4;Saída 4;Outras Marcações;Trabalhadas;Extras Úteis;Extras 60%;Extras 100%;Noturnas (Red.);Observações\n")
 
             // Rows
             val dayOfWeekNames = mapOf(
@@ -88,7 +88,8 @@ object CsvExporter {
             writer.write("TOTAIS DO MÊS;;;;\n")
             writer.write("Total Horas Trabalhadas;${CalculationEngine.formatMinutesToHours(summary.totalWorkedMinutes)}\n")
             writer.write("Total Horas Normais;${CalculationEngine.formatMinutesToHours(summary.totalNormalMinutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalNormalPayCents)}\n")
-            writer.write("Total Horas Extras 50%;${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}\n")
+            val ot50Label = if (summary.isWeekdayOtNormal) "Total Horas Extras Dias Úteis (Valor Normal)" else "Total Horas Extras 50%"
+            writer.write("$ot50Label;${CalculationEngine.formatMinutesToHours(summary.totalOt50Minutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalOt50PayCents)}\n")
             writer.write("Total Horas Extras 60%;${CalculationEngine.formatMinutesToHours(summary.totalOt60Minutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalOt60PayCents)}\n")
             writer.write("Total Horas Extras 100%;${CalculationEngine.formatMinutesToHours(summary.totalOt100Minutes)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalOt100PayCents)}\n")
             writer.write("Total Adicional Noturno;${CalculationEngine.formatMinutesToHours(summary.totalNightMinutesReduced)};Valor Estimado;${CalculationEngine.formatCentsToCurrency(summary.totalNightBonusPayCents)}\n")
